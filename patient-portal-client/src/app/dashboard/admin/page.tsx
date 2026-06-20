@@ -32,7 +32,6 @@ export default function AdminDashboard() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // 🟢 অরিজিনাল অ্যানালিটিক্স ডেটার স্টেট
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalApplications: 0,
     approvedDoctors: 0,
@@ -42,7 +41,6 @@ export default function AdminDashboard() {
     monthlyTrend: []
   });
 
-  // 🟢 এপিআই থেকে আসল অ্যানালিটিক্স ডেটা নিয়ে আসা
   const fetchAnalytics = async () => {
     try {
       const response = await API.get<AnalyticsData>('/Admin/analytics');
@@ -67,22 +65,22 @@ export default function AdminDashboard() {
   const handleApproval = async (id: number, approve: boolean) => {
     try {
       if (approve) {
-        await API.post(`/Admin/approve/${id}`);
+        // 🟢 ব্যাকএন্ডের HttpPut এবং সঠিক রাউটের সাথে ম্যাচ করা হলো
+        await API.put(`/Admin/approve-doctor/${id}`);
         alert('Doctor approved successfully!');
       } else {
-        await API.delete(`/Admin/reject/${id}`);
-        alert('Doctor request rejected/removed!');
+        // ব্যাকএন্ডে রিজেক্ট এপিআই যোগ না হওয়া পর্যন্ত সাময়িক অ্যালার্ট
+        alert('Reject/Revoke feature endpoint needs to be added in backend.');
+        return;
       }
-      // ডক্টর অ্যাকশনের পর চার্ট ও টেবিল দুটোই রিফ্রেশ হবে
       fetchDoctors();
       fetchAnalytics();
     } catch (err) {
       console.error('Error updating doctor status:', err);
-      alert('Failed to update doctor status.');
+      alert('Failed to update doctor status. Check CORS or backend logs.');
     }
   };
 
-  // প্রথমবার পেজ লোডে আসল ডেটা কল করা
   useEffect(() => {
     const loadInitialData = async () => {
       await Promise.all([fetchDoctors(), fetchAnalytics()]);
@@ -112,7 +110,7 @@ export default function AdminDashboard() {
 
       <main className="mx-auto max-w-7xl p-6 sm:p-8 space-y-8">
         
-        {/* 🟢 অরিজিনাল ডেটাসহ মিনি কার্ডস গ্রুপ */}
+        {/* 🟢 মিনি কার্ডস গ্রুপ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
             <div>
@@ -147,18 +145,18 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* 📊 অরিজিনাল চার্ট সেকশন */}
+        {/* 📊 চার্ট সেকশন (min-w-0 যোগ করে ফিক্স করা হয়েছে) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           {/* চার্ট ১: মাসিক রেজিস্ট্রেশন ট্রেন্ড */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 min-w-0">
             <div>
               <h4 className="text-base font-bold text-slate-800">Monthly Registration Trend</h4>
               <p className="text-xs text-slate-400 mt-0.5">ডাটাবেজ থেকে রিয়েল-টাইম সাইন-আপ গ্রাফ।</p>
             </div>
             <div className="h-72 w-full text-xs">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={analytics.monthlyTrend}>
+                <LineChart data={analytics.monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
@@ -172,14 +170,14 @@ export default function AdminDashboard() {
           </div>
 
           {/* চার্ট ২: মোস্ট পপুলার ডক্টরস */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 min-w-0">
             <div>
               <h4 className="text-base font-bold text-slate-800">Top Appointed Doctors</h4>
-              <p className="text-xs text-slate-400 mt-0.5">সবচেয়ে বেশি অ্যাপয়েন্টমেন্ট পাওয়া টপ ৫ ডক্টর।</p>
+              <p className="text-xs text-slate-400 mt-0.5">সবচেয়ে বেশি অ্যাপয়েন্টমেন্ট পাওয়া টপ ৫ ডক্টর।</p>
             </div>
             <div className="h-72 w-full text-xs">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics.topDoctors}>
+                <BarChart data={analytics.topDoctors} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
@@ -205,7 +203,6 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          {/* টেবিলের বাকি কোড আগের মতোই অপরিবর্তিত রয়েছে */}
           {isLoading ? (
             <div className="text-center py-12 text-sm font-medium text-slate-400">Loading doctor requests...</div>
           ) : doctors.length === 0 ? (
@@ -246,10 +243,9 @@ export default function AdminDashboard() {
                           {!doc.isApproved ? (
                             <>
                               <button onClick={() => handleApproval(doc.id, true)} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition">Approve</button>
-                              <button onClick={() => handleApproval(doc.id, false)} className="rounded-lg bg-white border border-rose-200 px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition">Reject</button>
                             </>
                           ) : (
-                            <button onClick={() => handleApproval(doc.id, false)} className="rounded-lg bg-white border border-rose-200 px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-600 hover:text-white shadow-sm transition-all">Revoke Access</button>
+                            <span className="text-xs text-slate-400 font-medium">No Actions Needed</span>
                           )}
                         </div>
                       </td>
