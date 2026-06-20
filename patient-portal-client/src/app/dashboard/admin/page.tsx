@@ -66,7 +66,7 @@ export default function AdminDashboard() {
     try {
       if (approve) {
         // 🟢 ব্যাকএন্ডের HttpPut এবং সঠিক রাউটের সাথে ম্যাচ করা হলো
-        await API.put(`/Admin/approve-doctor/${id}`,{});
+        await API.put(`/Admin/approve-doctor/${id}`, true);
         alert('Doctor approved successfully!');
       } else {
         // ব্যাকএন্ডে রিজেক্ট এপিআই যোগ না হওয়া পর্যন্ত সাময়িক অ্যালার্ট
